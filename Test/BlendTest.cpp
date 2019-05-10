@@ -65,10 +65,10 @@ class BlendTest
   const QString m_ImageReaderClassName = "ITKImageReader";
 
   // NOTE This should change to read the path of the DREAM3D_SDK CMake variable
-  const QString m_Image1Path = "C:\\DREAM3D_SDK\\DREAM3D_Data\\Data\\Image\\R0C0.jpeg";
-  const QString m_Image2Path = "C:\\DREAM3D_SDK\\DREAM3D_Data\\Data\\Image\\R0C1.jpeg";
-  const QString m_Image3Path = "C:\\DREAM3D_SDK\\DREAM3D_Data\\Data\\Image\\R1C0.jpeg";
-  const QString m_Image4Path = "C:\\DREAM3D_SDK\\DREAM3D_Data\\Data\\Image\\R1C1.jpeg";
+  const QString m_Image1Path = "C:\\Users\\nathan\\repos\\Super\\DREAM3D_SDK\\DREAM3D_Data\\Data\\Image\\R0C0.jpeg";
+  const QString m_Image2Path = "C:\\Users\\nathan\\repos\\Super\\DREAM3D_SDK\\DREAM3D_Data\\Data\\Image\\R0C1.jpeg";
+  const QString m_Image3Path = "C:\\Users\\nathan\\repos\\Super\\DREAM3D_SDK\\DREAM3D_Data\\Data\\Image\\R1C0.jpeg";
+  const QString m_Image4Path = "C:\\Users\\nathan\\repos\\Super\\DREAM3D_SDK\\DREAM3D_Data\\Data\\Image\\R1C1.jpeg";
   const QString m_Image1Name = "R0C0";
   const QString m_Image2Name = "R0C1";
   const QString m_Image3Name = "R1C0";
@@ -112,31 +112,39 @@ class BlendTest
 
   void SetUp()
   {
-    IFilterFactory::Pointer readerFactory = FilterManager::Instance()->getFactoryFromClassName(m_ImageReaderClassName);
-    AbstractFilter::Pointer readerFilter = readerFactory->create();
+    DREAM3D_REQUIRE_EQUAL(QFile::exists(m_Image1Path), true)
+    DREAM3D_REQUIRE_EQUAL(QFile::exists(m_Image2Path), true)
+    DREAM3D_REQUIRE_EQUAL(QFile::exists(m_Image3Path), true)
+    DREAM3D_REQUIRE_EQUAL(QFile::exists(m_Image4Path), true)
+
+    AbstractFilter::Pointer readerFilter = FilterManager::Instance()->getFactoryFromClassName(m_ImageReaderClassName)->create();
 
     // Set up the image reader to read images from the data directory
     readerFilter->setProperty("FileName", QVariant(m_Image1Path));
     readerFilter->setProperty("DataContainerName", QVariant(m_Image1Name));
     QString dcName = readerFilter->property("DataContainerName").toString();
+    DREAM3D_REQUIRE_EQUAL(dcName, m_Image1Name)
     readerFilter->execute();
     DREAM3D_REQUIRE(readerFilter->getDataContainerArray()->doesDataContainerExist(m_Image1Name) == true)
 
     readerFilter->setProperty("FileName", QVariant(m_Image2Path));
     readerFilter->setProperty("DataContainerName", QVariant(m_Image2Name));
     dcName = readerFilter->property("DataContainerName").toString();
+    DREAM3D_REQUIRE_EQUAL(dcName, m_Image2Name)
     readerFilter->execute();
     DREAM3D_REQUIRE(readerFilter->getDataContainerArray()->doesDataContainerExist(m_Image2Name) == true)
 
     readerFilter->setProperty("FileName", QVariant(m_Image3Path));
     readerFilter->setProperty("DataContainerName", QVariant(m_Image3Name));
     dcName = readerFilter->property("DataContainerName").toString();
+    DREAM3D_REQUIRE_EQUAL(dcName, m_Image3Name)
     readerFilter->execute();
     DREAM3D_REQUIRE(readerFilter->getDataContainerArray()->doesDataContainerExist(m_Image3Name) == true)
 
     readerFilter->setProperty("FileName", QVariant(m_Image4Path));
     readerFilter->setProperty("DataContainerName", QVariant(m_Image4Name));
     dcName = readerFilter->property("DataContainerName").toString();
+    DREAM3D_REQUIRE_EQUAL(dcName, m_Image4Name)
     readerFilter->execute();
     DREAM3D_REQUIRE(readerFilter->getDataContainerArray()->doesDataContainerExist(m_Image4Name) == true)
 
@@ -182,11 +190,6 @@ public:
 
   BlendTest()
   {
-    DREAM3D_REQUIRE(QFile::exists(m_Image1Path) == true)
-    DREAM3D_REQUIRE(QFile::exists(m_Image2Path) == true)
-    DREAM3D_REQUIRE(QFile::exists(m_Image3Path) == true)
-    DREAM3D_REQUIRE(QFile::exists(m_Image4Path) == true)
-
     IFilterFactory::Pointer blendFactory = FilterManager::Instance()->getFactoryFromClassName(m_filtName);
     DREAM3D_REQUIRE(blendFactory.get() != nullptr)
 
