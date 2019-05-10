@@ -63,6 +63,8 @@ class BlendTest
   const QChar m_colChar = 'C';
   const QString m_filtName = "Blend";
   const QString m_ImageReaderClassName = "ITKImageReader";
+
+  // NOTE This should change to read the path of the DREAM3D_SDK CMake variable
   const QString m_Image1Path = "C:\\DREAM3D_SDK\\DREAM3D_Data\\Data\\Image\\R0C0.jpeg";
   const QString m_Image2Path = "C:\\DREAM3D_SDK\\DREAM3D_Data\\Data\\Image\\R0C1.jpeg";
   const QString m_Image3Path = "C:\\DREAM3D_SDK\\DREAM3D_Data\\Data\\Image\\R1C0.jpeg";
@@ -88,9 +90,7 @@ class BlendTest
   static const int m_maxIterations = 10000;
 
   static constexpr double m_errTolerance = 3.0;
-
   static constexpr float m_overlapPercentage = 0.25f;
-
   static constexpr double m_lowTolerance = 1E-2;
   static constexpr double m_highTolerance = 1E-2;
 
@@ -118,21 +118,25 @@ class BlendTest
     // Set up the image reader to read images from the data directory
     readerFilter->setProperty("FileName", QVariant(m_Image1Path));
     readerFilter->setProperty("DataContainerName", QVariant(m_Image1Name));
+    QString dcName = readerFilter->property("DataContainerName").toString();
     readerFilter->execute();
     DREAM3D_REQUIRE(readerFilter->getDataContainerArray()->doesDataContainerExist(m_Image1Name) == true)
 
     readerFilter->setProperty("FileName", QVariant(m_Image2Path));
     readerFilter->setProperty("DataContainerName", QVariant(m_Image2Name));
+    dcName = readerFilter->property("DataContainerName").toString();
     readerFilter->execute();
     DREAM3D_REQUIRE(readerFilter->getDataContainerArray()->doesDataContainerExist(m_Image2Name) == true)
 
     readerFilter->setProperty("FileName", QVariant(m_Image3Path));
     readerFilter->setProperty("DataContainerName", QVariant(m_Image3Name));
+    dcName = readerFilter->property("DataContainerName").toString();
     readerFilter->execute();
     DREAM3D_REQUIRE(readerFilter->getDataContainerArray()->doesDataContainerExist(m_Image3Name) == true)
 
     readerFilter->setProperty("FileName", QVariant(m_Image4Path));
     readerFilter->setProperty("DataContainerName", QVariant(m_Image4Name));
+    dcName = readerFilter->property("DataContainerName").toString();
     readerFilter->execute();
     DREAM3D_REQUIRE(readerFilter->getDataContainerArray()->doesDataContainerExist(m_Image4Name) == true)
 
@@ -195,6 +199,6 @@ public:
   {
     int err = EXIT_SUCCESS;
     SetUp();
-    DREAM3D_REGISTER_TEST(RunTest());
+    DREAM3D_REGISTER_TEST(RunTest())
   }
 };
