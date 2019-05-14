@@ -35,13 +35,13 @@
 #include "SIMPLib/Common/Constants.h"
 
 #include "SIMPLib/FilterParameters/ChoiceFilterParameter.h"
+#include "SIMPLib/FilterParameters/DoubleFilterParameter.h"
 #include "SIMPLib/FilterParameters/FilterParameter.h"
 #include "SIMPLib/FilterParameters/FloatFilterParameter.h"
-#include "SIMPLib/FilterParameters/DoubleFilterParameter.h"
 #include "SIMPLib/FilterParameters/IntFilterParameter.h"
 #include "SIMPLib/FilterParameters/LinkedChoicesFilterParameter.h"
-#include "SIMPLib/FilterParameters/StringFilterParameter.h"
 #include "SIMPLib/FilterParameters/MultiDataContainerSelectionFilterParameter.h"
+#include "SIMPLib/FilterParameters/StringFilterParameter.h"
 
 #include "ITKImageProcessing/ITKImageProcessingConstants.h"
 #include "ITKImageProcessing/ITKImageProcessingVersion.h"
@@ -58,14 +58,14 @@ class MultiParamCostFunction : public itk::SingleValuedCostFunction
 public:
   itkNewMacro(MultiParamCostFunction)
 
-  void Initialize(std::vector<double> mins)
+      void Initialize(std::vector<double> mins)
   {
     m_mins = mins;
   }
 
   void GetDerivative(const ParametersType&, DerivativeType&) const override
   {
-	throw std::exception();
+    throw std::exception();
   }
 
   uint32_t GetNumberOfParameters() const override
@@ -77,7 +77,7 @@ public:
   {
     MeasureType residual = 0.0;
     size_t numParams = parameters.size();
-    for (size_t idx = 0; idx < numParams; ++idx)
+    for(size_t idx = 0; idx < numParams; ++idx)
     {
       double minValue = m_mins[idx];
       double paramValue = parameters[idx];
@@ -87,7 +87,8 @@ public:
   }
 };
 
-template<class Image_T> class FFTConvolutionCostFunction : public itk::SingleValuedCostFunction
+template <class Image_T>
+class FFTConvolutionCostFunction : public itk::SingleValuedCostFunction
 {
   static const uint8_t IMAGE_DIMENSIONS = 2;
   using Cell_T = size_t;
@@ -99,7 +100,7 @@ template<class Image_T> class FFTConvolutionCostFunction : public itk::SingleVal
   using RegionPair = std::pair<typename InputImage::RegionType, typename InputImage::RegionType>;
   using OverlapPair = std::pair<GridPair, RegionPair>;
   using ImageGrid = std::map<std::pair<Cell_T, Cell_T>, typename InputImage::Pointer>;
-  using FilterType =  itk::FFTConvolutionImageFilter<InputImage, InputImage, OutputImage>;
+  using FilterType = itk::FFTConvolutionImageFilter<InputImage, InputImage, OutputImage>;
 
   size_t m_degree = 2;
   std::vector<std::pair<size_t, size_t>> m_IJ;
@@ -110,7 +111,8 @@ template<class Image_T> class FFTConvolutionCostFunction : public itk::SingleVal
 public:
   itkNewMacro(FFTConvolutionCostFunction)
 
-  void Initialize(QStringList chosenDataContainers, QChar rowChar, QChar colChar, size_t degree, float overlapPercentage, DataContainerArrayShPtr dca, const QString& amName, const QString& dataAAName, const QString& xAAName, const QString& yAAName)
+      void Initialize(QStringList chosenDataContainers, QChar rowChar, QChar colChar, size_t degree, float overlapPercentage, DataContainerArrayShPtr dca, const QString& amName,
+                      const QString& dataAAName, const QString& xAAName, const QString& yAAName)
   {
     m_filter = FilterType::New();
     m_degree = degree;
@@ -144,7 +146,7 @@ public:
     // Populate and assign eachImage to m_imageGrid
     for(const auto& eachDC : dca->getDataContainers())
     {
-      if (!chosenDataContainers.contains(eachDC->getName()))
+      if(!chosenDataContainers.contains(eachDC->getName()))
       {
         continue;
       }
@@ -168,7 +170,7 @@ public:
         int numComponents = da->getNumberOfComponents();
         size_t sz = da->getComponentDimensions()[0];
         std::vector<PixelValue_T> valueArray(sz);
-        for (size_t eachCompIdx = 0; eachCompIdx < sz; ++eachCompIdx)
+        for(size_t eachCompIdx = 0; eachCompIdx < sz; ++eachCompIdx)
         {
           // TODO
         }
@@ -204,8 +206,7 @@ public:
         kernelSize[1] = height;
 
         m_overlaps.push_back(
-            std::make_pair(std::make_pair(eachImage.first, rightImage->first), std::make_pair(InputImage::RegionType(imageOrigin, imageSize), InputImage::RegionType(kernelOrigin, kernelSize)))
-        );
+            std::make_pair(std::make_pair(eachImage.first, rightImage->first), std::make_pair(InputImage::RegionType(imageOrigin, imageSize), InputImage::RegionType(kernelOrigin, kernelSize))));
       }
       if(bottomImage != m_imageGrid.end())
       {
@@ -221,15 +222,14 @@ public:
         kernelSize[1] = overlapDim;
 
         m_overlaps.push_back(
-          std::make_pair(std::make_pair(eachImage.first, bottomImage->first), std::make_pair(InputImage::RegionType(imageOrigin, imageSize), InputImage::RegionType(kernelOrigin, kernelSize)))
-        );
+            std::make_pair(std::make_pair(eachImage.first, bottomImage->first), std::make_pair(InputImage::RegionType(imageOrigin, imageSize), InputImage::RegionType(kernelOrigin, kernelSize))));
       }
     }
   }
 
   void GetDerivative(const ParametersType&, DerivativeType&) const override
   {
-	throw std::exception();
+    throw std::exception();
   }
 
   uint32_t GetNumberOfParameters() const override
@@ -425,23 +425,23 @@ void Blend::dataCheck()
   clearWarningCode();
 
   m_initialGuess.clear();
-  for (const auto& eachCoeff: m_InitialSimplexGuess.split(";"))
+  for(const auto& eachCoeff : m_InitialSimplexGuess.split(";"))
   {
     bool coerced = false;
     m_initialGuess.push_back(eachCoeff.toDouble(&coerced));
-    if (!coerced)
+    if(!coerced)
     {
       setErrorCondition(-66500, "A coefficient could not be translated into a floating-point precision number");
     }
   }
 
   size_t len = static_cast<size_t>(2 * m_Degree * m_Degree + 4 * m_Degree + 2);
-  if (len != m_initialGuess.size())
+  if(len != m_initialGuess.size())
   {
     setErrorCondition(-66400, "Number of coefficients in initial guess is not compatible with degree number");
   }
 
-  if (m_OverlapPercentage < 0.0f || m_OverlapPercentage >= 1.00f)
+  if(m_OverlapPercentage < 0.0f || m_OverlapPercentage >= 1.00f)
   {
     setErrorCondition(-66500, "Overlap Percentage should be a floating-point precision number between 0.0 and 1.0");
   }
@@ -465,13 +465,13 @@ void Blend::dataCheck()
   }
 
   QString typeName = getDataContainerArray()->getDataContainers()[0]->getAttributeMatrix(m_AttributeMatrixName)->getAttributeArray(m_DataAttributeArrayName)->getTypeAsString();
-  for (const auto& eachDC : getDataContainerArray()->getDataContainers())
+  for(const auto& eachDC : getDataContainerArray()->getDataContainers())
   {
-    if (!m_ChosenDataContainers.contains(eachDC->getName()))
+    if(!m_ChosenDataContainers.contains(eachDC->getName()))
     {
       continue;
     }
-    else if (eachDC->getAttributeMatrix(m_AttributeMatrixName)->getAttributeArray(m_DataAttributeArrayName)->getTypeAsString() != typeName)
+    else if(eachDC->getAttributeMatrix(m_AttributeMatrixName)->getAttributeArray(m_DataAttributeArrayName)->getTypeAsString() != typeName)
     {
       setErrorCondition(-66600, "Not all data attribute arrays are the same type");
     }
@@ -511,7 +511,7 @@ void Blend::execute()
   {
     QString ss = QObject::tr("An unknown warning occurred");
     setWarningCondition(-66450, ss);
-    //notifyStatusMessage(ss);
+    // notifyStatusMessage(ss);
   }
 
   DataContainerShPtr blendDC = getDataContainerArray()->createNonPrereqDataContainer(this, DataArrayPath(m_blendDCName, m_transformAMName, ""));
@@ -523,7 +523,7 @@ void Blend::execute()
   getDataContainerArray()->addOrReplaceDataContainer(blendDC);
 
   itk::AmoebaOptimizer::ParametersType initialParams(m_initialGuess.size());
-  for (size_t idx = 0; idx < m_initialGuess.size(); ++idx)
+  for(size_t idx = 0; idx < m_initialGuess.size(); ++idx)
   {
     initialParams[idx] = m_initialGuess[idx];
   }
@@ -538,13 +538,11 @@ void Blend::execute()
   // TODO Figure out the type/dimensions that need to be passed in as the template parameter
   // for the FFTConvolutionCostFunction
   // Probably something like std::vector<double>
-//  using CostFunctionType = FFTConvolutionCostFunction<std::vector<double>>;
+  // using CostFunctionType = FFTConvolutionCostFunction<std::vector<double>>;
   CostFunctionType implementation;
-  implementation.Initialize(
-    std::vector<double>{1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0}
-    //    m_ChosenDataContainers, m_RowCharacter, m_ColumnCharacter, m_Degree, m_OverlapPercentage,
-    //    getDataContainerArray(),
-    //    m_AttributeMatrixName, m_DataAttributeArrayName, m_XAttributeArrayName, m_YAttributeArrayName
+  implementation.Initialize(std::vector<double>{1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0} //    m_ChosenDataContainers, m_RowCharacter, m_ColumnCharacter, m_Degree, m_OverlapPercentage,
+                                                                                        //    getDataContainerArray(),
+                                                                                        //    m_AttributeMatrixName, m_DataAttributeArrayName, m_XAttributeArrayName, m_YAttributeArrayName
   );
   m_optimizer->SetCostFunction(&implementation);
   m_optimizer->StartOptimization();
