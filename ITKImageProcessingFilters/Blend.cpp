@@ -384,8 +384,8 @@ void Blend::setupFilterParameters()
   FilterParameterVectorType parameters;
 
   {
-    //MultiDataContainerSelectionFilterParameter::RequirementType req;
-    //parameters.push_back(SIMPL_NEW_MDC_SELECTION_FP("Chosen Data Containers", ChosenDataContainers, FilterParameter::Category::RequiredArray, Blend, req));
+    MultiDataContainerSelectionFilterParameter::RequirementType req;
+    parameters.push_back(SIMPL_NEW_MDC_SELECTION_FP("Chosen Data Containers", ChosenDataContainers, FilterParameter::Category::RequiredArray, Blend, req));
   }
 
   parameters.push_back(SIMPL_NEW_INTEGER_FP("Max Iterations", MaxIterations, FilterParameter::Category::Parameter, Blend));
@@ -394,11 +394,11 @@ void Blend::setupFilterParameters()
 
   parameters.push_back(SIMPL_NEW_FLOAT_FP("Overlap Percentage", OverlapPercentage, FilterParameter::Category::Parameter, Blend));
 
-  //parameters.push_back(SIMPL_NEW_DOUBLE_FP("Low Tolerance", LowTolerance, FilterParameter::Category::Parameter, Blend));
+  parameters.push_back(SIMPL_NEW_DOUBLE_FP("Low Tolerance", LowTolerance, FilterParameter::Category::Parameter, Blend));
 
-  //parameters.push_back(SIMPL_NEW_DOUBLE_FP("High Tolerance", HighTolerance, FilterParameter::Category::Parameter, Blend));
+  parameters.push_back(SIMPL_NEW_DOUBLE_FP("High Tolerance", HighTolerance, FilterParameter::Category::Parameter, Blend));
 
-  //parameters.push_back(SIMPL_NEW_STRING_FP("Initial Simplex Guess", InitialSimplexGuess, FilterParameter::Category::Parameter, Blend));
+  parameters.push_back(SIMPL_NEW_STRING_FP("Initial Simplex Guess", InitialSimplexGuess, FilterParameter::Category::Parameter, Blend));
 
   parameters.push_back(SIMPL_NEW_STRING_FP("Attribute Matrix Name", AttributeMatrixName, FilterParameter::Category::Parameter, Blend));
 
@@ -408,9 +408,9 @@ void Blend::setupFilterParameters()
 
   parameters.push_back(SIMPL_NEW_STRING_FP("Data Attribute Array Name", DataAttributeArrayName, FilterParameter::Category::Parameter, Blend));
 
-  //parameters.push_back(SIMPL_NEW_STRING_FP("Row Character", RowCharacter, FilterParameter::Category::Parameter, Blend));
+  parameters.push_back(SIMPL_NEW_STRING_FP("Row Character", RowCharacter, FilterParameter::Category::Parameter, Blend));
 
-  //parameters.push_back(SIMPL_NEW_STRING_FP("Column Character", ColumnCharacter, FilterParameter::Category::Parameter, Blend));
+  parameters.push_back(SIMPL_NEW_STRING_FP("Column Character", ColumnCharacter, FilterParameter::Category::Parameter, Blend));
 
   setFilterParameters(parameters);
 }
