@@ -354,6 +354,7 @@ Blend::Blend()
 : m_MaxIterations(1000)
 , m_Degree(1)
 , m_OverlapPercentage(0.0f)
+, m_InitialSimplexGuess("0.1;0.1;0.1;0.1;0.1;0.1;0.1;0.1")
 , m_LowTolerance(1E-2)
 , m_RowCharacter("R")
 , m_ColumnCharacter("C")
@@ -423,6 +424,7 @@ void Blend::dataCheck()
   clearErrorCode();
   clearWarningCode();
 
+  m_initialGuess.clear();
   for (const auto& eachCoeff: m_InitialSimplexGuess.split(";"))
   {
     bool coerced = false;
