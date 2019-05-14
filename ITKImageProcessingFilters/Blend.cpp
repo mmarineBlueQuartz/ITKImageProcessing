@@ -51,6 +51,7 @@
 
 using PixelValue_T = double;
 
+// =============================================================================
 class MultiParamCostFunction : public itk::SingleValuedCostFunction
 {
   std::vector<double> m_mins{};
@@ -58,21 +59,25 @@ class MultiParamCostFunction : public itk::SingleValuedCostFunction
 public:
   itkNewMacro(MultiParamCostFunction)
 
-      void Initialize(std::vector<double> mins)
+  // =============================================================================
+  void Initialize(std::vector<double> mins)
   {
     m_mins = mins;
   }
 
+  // =============================================================================
   void GetDerivative(const ParametersType&, DerivativeType&) const override
   {
     throw std::exception();
   }
 
+  // =============================================================================
   uint32_t GetNumberOfParameters() const override
   {
     return static_cast<uint32_t>(m_mins.size());
   }
 
+  // =============================================================================
   MeasureType GetValue(const ParametersType& parameters) const override
   {
     MeasureType residual = 0.0;
@@ -87,6 +92,7 @@ public:
   }
 };
 
+// =============================================================================
 template <class Image_T>
 class FFTConvolutionCostFunction : public itk::SingleValuedCostFunction
 {
@@ -111,8 +117,8 @@ class FFTConvolutionCostFunction : public itk::SingleValuedCostFunction
 public:
   itkNewMacro(FFTConvolutionCostFunction)
 
-      void Initialize(QStringList chosenDataContainers, QChar rowChar, QChar colChar, size_t degree, float overlapPercentage, DataContainerArrayShPtr dca, const QString& amName,
-                      const QString& dataAAName, const QString& xAAName, const QString& yAAName)
+  void Initialize(QStringList chosenDataContainers, QChar rowChar, QChar colChar, size_t degree, float overlapPercentage, DataContainerArrayShPtr dca, const QString& amName, const QString& dataAAName,
+                  const QString& xAAName, const QString& yAAName)
   {
     m_filter = FilterType::New();
     m_degree = degree;
@@ -227,16 +233,19 @@ public:
     }
   }
 
+  // =============================================================================
   void GetDerivative(const ParametersType&, DerivativeType&) const override
   {
     throw std::exception();
   }
 
+  // =============================================================================
   uint32_t GetNumberOfParameters() const override
   {
     return static_cast<uint32_t>(2 * (m_degree * m_degree + 2 * m_degree + 1));
   }
 
+  // =============================================================================
   MeasureType GetValue(const ParametersType& parameters) const override
   {
     const double tolerance = 0.05;
@@ -331,6 +340,7 @@ public:
   }
 };
 
+// =============================================================================
 uint Blend::GetIterationsFromStopDescription(const QString& stopDescription) const
 {
   if(GetConvergenceFromStopDescription(stopDescription))
@@ -342,6 +352,7 @@ uint Blend::GetIterationsFromStopDescription(const QString& stopDescription) con
   return m_MaxIterations;
 }
 
+// =============================================================================
 bool Blend::GetConvergenceFromStopDescription(const QString& stopDescription) const
 {
   return stopDescription.contains("have been met");
@@ -390,27 +401,16 @@ void Blend::setupFilterParameters()
   }
 
   parameters.push_back(SIMPL_NEW_INTEGER_FP("Max Iterations", MaxIterations, FilterParameter::Category::Parameter, Blend));
-
   parameters.push_back(SIMPL_NEW_INTEGER_FP("Degree", Degree, FilterParameter::Category::Parameter, Blend));
-
   parameters.push_back(SIMPL_NEW_FLOAT_FP("Overlap Percentage", OverlapPercentage, FilterParameter::Category::Parameter, Blend));
-
   parameters.push_back(SIMPL_NEW_DOUBLE_FP("Low Tolerance", LowTolerance, FilterParameter::Category::Parameter, Blend));
-
   parameters.push_back(SIMPL_NEW_DOUBLE_FP("High Tolerance", HighTolerance, FilterParameter::Category::Parameter, Blend));
-
   parameters.push_back(SIMPL_NEW_STRING_FP("Initial Simplex Guess", InitialSimplexGuess, FilterParameter::Category::Parameter, Blend));
-
   parameters.push_back(SIMPL_NEW_STRING_FP("Attribute Matrix Name", AttributeMatrixName, FilterParameter::Category::Parameter, Blend));
-
   parameters.push_back(SIMPL_NEW_STRING_FP("X Attribute Array Name", XAttributeArrayName, FilterParameter::Category::Parameter, Blend));
-
   parameters.push_back(SIMPL_NEW_STRING_FP("Y Attribute Array Name", YAttributeArrayName, FilterParameter::Category::Parameter, Blend));
-
   parameters.push_back(SIMPL_NEW_STRING_FP("Data Attribute Array Name", DataAttributeArrayName, FilterParameter::Category::Parameter, Blend));
-
   parameters.push_back(SIMPL_NEW_STRING_FP("Row Character", RowCharacter, FilterParameter::Category::Parameter, Blend));
-
   parameters.push_back(SIMPL_NEW_STRING_FP("Column Character", ColumnCharacter, FilterParameter::Category::Parameter, Blend));
 
   setFilterParameters(parameters);
