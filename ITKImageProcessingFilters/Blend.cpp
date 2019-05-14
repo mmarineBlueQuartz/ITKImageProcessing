@@ -32,6 +32,11 @@
 
 #include "Blend.h"
 
+#ifdef SIMPL_USE_PARALLEL_ALGORITHMS
+#include <tbb/task_group.h>
+#include <tbb/task_scheduler_init.h>
+#endif
+
 #include "SIMPLib/Common/Constants.h"
 
 #include "SIMPLib/FilterParameters/ChoiceFilterParameter.h"
@@ -105,12 +110,13 @@ class FFTConvolutionCostFunction : public itk::SingleValuedCostFunction
   using GridPair = std::pair<GridKey, GridKey>;
   using RegionPair = std::pair<typename InputImage::RegionType, typename InputImage::RegionType>;
   using OverlapPair = std::pair<GridPair, RegionPair>;
+  using OverlapPairs = std::vector<OverlapPair>;
   using ImageGrid = std::map<std::pair<Cell_T, Cell_T>, typename InputImage::Pointer>;
   using FilterType = itk::FFTConvolutionImageFilter<InputImage, InputImage, OutputImage>;
 
   size_t m_degree = 2;
   std::vector<std::pair<size_t, size_t>> m_IJ;
-  std::vector<OverlapPair> m_overlaps;
+  OverlapPairs m_overlaps;
   ImageGrid m_imageGrid;
   typename FilterType::Pointer m_filter;
 
@@ -270,73 +276,126 @@ public:
     PixelCoord eachPixel;
     typename InputImage::Pointer distortedImage;
 
+#ifdef SIMPL_USE_PARALLEL_ALGORITHMS
+    tbb::task_scheduler_init init;
+    std::shared_ptr<tbb::task_group> g(new tbb::task_group);
+    // C++11 RIGHT HERE....
+    int32_t nthreads = static_cast<int32_t>(std::thread::hardware_concurrency()); // Returns ZERO if not defined on this platform
+    int32_t threadCount = 0;
+#endif
+
     // Apply the Transform to each image in the image grid
-    for(const auto& eachImage : m_imageGrid) // TODO Parallelize this
+    for(const auto& eachImage : m_imageGrid) // Parallelize this
     {
-      bufferedRegion = eachImage.second->GetBufferedRegion();
-      dims = bufferedRegion.GetSize();
-      width = dims[0];
-      height = dims[1];
-      lastXIndex = width - 1 + tolerance;
-      lastYIndex = height - 1 + tolerance;
-
-      x_trans = (width - 1) / 2.0;
-      y_trans = (height - 1) / 2.0;
-
-      distortedImage = InputImage::New();
-      distortedImage->SetRegions(bufferedRegion);
-      distortedImage->Allocate();
-
-      // Iterate through the pixels in eachImage and apply the transform
-      itk::ImageRegionIterator<InputImage> it(eachImage.second, bufferedRegion);
-      for(it.GoToBegin(); !it.IsAtEnd(); ++it) // TODO Parallelize this
+#ifdef SIMPL_USE_PARALLEL_ALGORITHMS
+      g->run(applyTransformation(eachImage));
+      threadCount++;
+      if(threadCount == nthreads)
       {
-        PixelCoord pixel = it.GetIndex();
-        x = x_trans;
-        y = y_trans;
-        for(size_t idx = 0; idx < parameters.size(); ++idx) // TODO Parallelize this
-        {
-          eachIJ = m_IJ[idx - (idx >= m_IJ.size() ? m_IJ.size() : 0)];
-
-          u_v = pow((pixel[0] - x_trans), eachIJ.first) * pow((pixel[1] - y_trans), eachIJ.second);
-
-          term = u_v * parameters[idx];
-          idx < (m_IJ.size() / 2) ? x += term : y += term;
-        }
-
-        // This check effectively "clips" data
-        if(x >= -tolerance && x <= lastXIndex && y >= -tolerance && y <= lastYIndex)
-        {
-          eachPixel[0] = static_cast<int64_t>(round(x));
-          eachPixel[1] = static_cast<int64_t>(round(y));
-          // The value obtained with eachImage.second->GetPixel(eachPixel) could have
-          // its "contrast" adjusted based on its radial location from the center of
-          // the image at this step to compensate for error encountered from radial effects
-          distortedImage->SetPixel(eachPixel, eachImage.second->GetPixel(eachPixel));
-        }
+        g->wait();
+        threadCount = 0;
       }
-      distortedGrid.insert_or_assign(eachImage.first, distortedImage);
+#else
+      applyTransformation(eachImage);
+#endif
     }
+
+#ifdef SIMPL_USE_PARALLEL_ALGORITHMS
+    // This will spill over if the number of files to process does not divide evenly by the number of threads.
+    g->wait();
+    threadCount = 0;
+#endif
 
     // Find the FFT Convolution and accumulate the maximum value from each overlap
     std::atomic<MeasureType> residual{0.0};
-    for(const auto& eachOverlap : m_overlaps) // TODO Parallelize this
+    for(const auto& eachOverlap : m_overlaps) // Parallelize this
     {
-      typename InputImage::Pointer image = distortedGrid.at(eachOverlap.first.first);
-      image->SetRequestedRegion(eachOverlap.second.first);
-      image->GetRequestedRegion().IsInside(eachOverlap.second.first);
-      m_filter->SetInput(image);
-
-      typename InputImage::Pointer kernel = distortedGrid.at(eachOverlap.first.second);
-      kernel->SetRequestedRegion(eachOverlap.second.second);
-      kernel->GetRequestedRegion().IsInside(eachOverlap.second.second);
-      m_filter->SetKernelImage(kernel);
-
-      m_filter->Update();
-      typename OutputImage::Pointer fftConvolve = m_filter->GetOutput();
-      residual = residual + *std::max_element(fftConvolve->GetBufferPointer(), fftConvolve->GetBufferPointer() + fftConvolve->GetPixelContainer()->Size());
+#ifdef SIMPL_USE_PARALLEL_ALGORITHMS
+      g->run(findFFTConvolution(eachOverlap));
+      threadCount++;
+      if(threadCount == nthreads)
+      {
+        g->wait();
+        threadCount = 0;
+      }
+#else
+      findFFTConvolution(eachOverlap);
+#endif
     }
+
+#ifdef SIMPL_USE_PARALLEL_ALGORITHMS
+    // This will spill over if the number of files to process does not divide evenly by the number of threads.
+    g->wait();
+    threadCount = 0;
+#endif
+
     return sqrt(residual);
+  }
+
+  // =============================================================================
+  void applyTransformation(const ImageGrid& image)
+  {
+    bufferedRegion = eachImage.second->GetBufferedRegion();
+    dims = bufferedRegion.GetSize();
+    width = dims[0];
+    height = dims[1];
+    lastXIndex = width - 1 + tolerance;
+    lastYIndex = height - 1 + tolerance;
+
+    x_trans = (width - 1) / 2.0;
+    y_trans = (height - 1) / 2.0;
+
+    distortedImage = InputImage::New();
+    distortedImage->SetRegions(bufferedRegion);
+    distortedImage->Allocate();
+
+    // Iterate through the pixels in eachImage and apply the transform
+    itk::ImageRegionIterator<InputImage> it(eachImage.second, bufferedRegion);
+    for(it.GoToBegin(); !it.IsAtEnd(); ++it) // TODO Parallelize this
+    {
+      PixelCoord pixel = it.GetIndex();
+      x = x_trans;
+      y = y_trans;
+      for(size_t idx = 0; idx < parameters.size(); ++idx) // TODO Parallelize this
+      {
+        eachIJ = m_IJ[idx - (idx >= m_IJ.size() ? m_IJ.size() : 0)];
+
+        u_v = pow((pixel[0] - x_trans), eachIJ.first) * pow((pixel[1] - y_trans), eachIJ.second);
+
+        term = u_v * parameters[idx];
+        idx < (m_IJ.size() / 2) ? x += term : y += term;
+      }
+
+      // This check effectively "clips" data
+      if(x >= -tolerance && x <= lastXIndex && y >= -tolerance && y <= lastYIndex)
+      {
+        eachPixel[0] = static_cast<int64_t>(round(x));
+        eachPixel[1] = static_cast<int64_t>(round(y));
+        // The value obtained with eachImage.second->GetPixel(eachPixel) could have
+        // its "contrast" adjusted based on its radial location from the center of
+        // the image at this step to compensate for error encountered from radial effects
+        distortedImage->SetPixel(eachPixel, eachImage.second->GetPixel(eachPixel));
+      }
+    }
+    distortedGrid.insert_or_assign(eachImage.first, distortedImage);
+  }
+
+  // =============================================================================
+  void findFFTConvolution(const OverlapPair& pair)
+  {
+    typename InputImage::Pointer image = distortedGrid.at(eachOverlap.first.first);
+    image->SetRequestedRegion(eachOverlap.second.first);
+    image->GetRequestedRegion().IsInside(eachOverlap.second.first);
+    m_filter->SetInput(image);
+
+    typename InputImage::Pointer kernel = distortedGrid.at(eachOverlap.first.second);
+    kernel->SetRequestedRegion(eachOverlap.second.second);
+    kernel->GetRequestedRegion().IsInside(eachOverlap.second.second);
+    m_filter->SetKernelImage(kernel);
+
+    m_filter->Update();
+    typename OutputImage::Pointer fftConvolve = m_filter->GetOutput();
+    residual = residual + *std::max_element(fftConvolve->GetBufferPointer(), fftConvolve->GetBufferPointer() + fftConvolve->GetPixelContainer()->Size());
   }
 };
 
