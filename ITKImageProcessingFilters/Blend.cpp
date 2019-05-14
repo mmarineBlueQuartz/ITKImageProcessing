@@ -47,6 +47,7 @@
 #include "SIMPLib/FilterParameters/LinkedChoicesFilterParameter.h"
 #include "SIMPLib/FilterParameters/MultiDataContainerSelectionFilterParameter.h"
 #include "SIMPLib/FilterParameters/StringFilterParameter.h"
+#include "SIMPLib/Utilities/SIMPLibParallelAlgorithm.hpp"
 
 #include "ITKImageProcessing/ITKImageProcessingConstants.h"
 #include "ITKImageProcessing/ITKImageProcessingVersion.h"
@@ -276,58 +277,24 @@ public:
     PixelCoord eachPixel;
     typename InputImage::Pointer distortedImage;
 
-#ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-    tbb::task_scheduler_init init;
-    std::shared_ptr<tbb::task_group> g(new tbb::task_group);
-    // C++11 RIGHT HERE....
-    int32_t nthreads = static_cast<int32_t>(std::thread::hardware_concurrency()); // Returns ZERO if not defined on this platform
-    int32_t threadCount = 0;
-#endif
+    SIMPL_INIT_PARALLEL_ALGORITHMS()
 
     // Apply the Transform to each image in the image grid
     for(const auto& eachImage : m_imageGrid) // Parallelize this
     {
-#ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-      g->run(applyTransformation(eachImage));
-      threadCount++;
-      if(threadCount == nthreads)
-      {
-        g->wait();
-        threadCount = 0;
-      }
-#else
-      applyTransformation(eachImage);
-#endif
+      SIMPL_RUN_PARALLEL_ALGORITHM(applyTransformation(eachImage))
     }
 
-#ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-    // This will spill over if the number of files to process does not divide evenly by the number of threads.
-    g->wait();
-    threadCount = 0;
-#endif
+    SIMPL_END_PARALLEL_ALGORITHMS()
 
     // Find the FFT Convolution and accumulate the maximum value from each overlap
     std::atomic<MeasureType> residual{0.0};
     for(const auto& eachOverlap : m_overlaps) // Parallelize this
     {
-#ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-      g->run(findFFTConvolution(eachOverlap));
-      threadCount++;
-      if(threadCount == nthreads)
-      {
-        g->wait();
-        threadCount = 0;
-      }
-#else
-      findFFTConvolution(eachOverlap);
-#endif
+      SIMPL_RUN_PARALLEL_ALGORITHM(findFFTConvolution(eachOverlap))
     }
 
-#ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-    // This will spill over if the number of files to process does not divide evenly by the number of threads.
-    g->wait();
-    threadCount = 0;
-#endif
+    SIMPL_END_PARALLEL_ALGORITHMS()
 
     return sqrt(residual);
   }
