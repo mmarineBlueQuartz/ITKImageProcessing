@@ -32,11 +32,6 @@
 
 #include "Blend.h"
 
-#ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-#include <tbb/task_group.h>
-#include <tbb/task_scheduler_init.h>
-#endif
-
 #include "SIMPLib/Common/Constants.h"
 
 #include "SIMPLib/FilterParameters/ChoiceFilterParameter.h"
@@ -47,7 +42,7 @@
 #include "SIMPLib/FilterParameters/LinkedChoicesFilterParameter.h"
 #include "SIMPLib/FilterParameters/MultiDataContainerSelectionFilterParameter.h"
 #include "SIMPLib/FilterParameters/StringFilterParameter.h"
-#include "SIMPLib/Utilities/SIMPLibParallelAlgorithm.hpp"
+#include "SIMPLib/Utilities/ParallelTaskAlgorithm.h"
 
 #include "ITKImageProcessing/ITKImageProcessingConstants.h"
 #include "ITKImageProcessing/ITKImageProcessingVersion.h"
@@ -277,24 +272,24 @@ public:
     PixelCoord eachPixel;
     typename InputImage::Pointer distortedImage;
 
-    SIMPL_INIT_PARALLEL_ALGORITHMS()
+    ParallelTaskAlgorithm taskAlg();
 
     // Apply the Transform to each image in the image grid
     for(const auto& eachImage : m_imageGrid) // Parallelize this
     {
-      SIMPL_RUN_PARALLEL_ALGORITHM(applyTransformation(eachImage))
+      taskAlg.execute(applyTransformation(eachImage));
     }
 
-    SIMPL_END_PARALLEL_ALGORITHMS()
+    taskAlg.wait();
 
     // Find the FFT Convolution and accumulate the maximum value from each overlap
     std::atomic<MeasureType> residual{0.0};
     for(const auto& eachOverlap : m_overlaps) // Parallelize this
     {
-      SIMPL_RUN_PARALLEL_ALGORITHM(findFFTConvolution(eachOverlap))
+      taskAlg.execute(findFFTConvolution(eachOverlap));
     }
 
-    SIMPL_END_PARALLEL_ALGORITHMS()
+    taskAlg.wait();
 
     return sqrt(residual);
   }
