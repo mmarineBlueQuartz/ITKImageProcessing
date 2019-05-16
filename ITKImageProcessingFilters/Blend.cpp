@@ -119,8 +119,8 @@ class FFTConvolutionCostFunction : public itk::SingleValuedCostFunction
 public:
   itkNewMacro(FFTConvolutionCostFunction)
 
-  void Initialize(QStringList chosenDataContainers, QChar rowChar, QChar colChar, size_t degree, float overlapPercentage, DataContainerArrayShPtr dca, const QString& amName, const QString& dataAAName,
-                  const QString& xAAName, const QString& yAAName)
+  void Initialize(QStringList chosenDataContainers, QChar rowChar, QChar colChar, size_t degree, float overlapPercentage, DataContainerArrayShPtr dca, const QString& amName,
+                  const QString& dataAAName, const QString& xAAName, const QString& yAAName)
   {
     m_filter = FilterType::New();
     m_degree = degree;

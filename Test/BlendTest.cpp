@@ -31,8 +31,8 @@
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-#include <QtCore/QCoreApplication>
 #include <QFile>
+#include <QtCore/QCoreApplication>
 
 #include "SIMPLib/Common/SIMPLibSetGetMacros.h"
 #include "SIMPLib/DataArrays/DataArray.hpp"
@@ -49,15 +49,16 @@
 #include "UnitTestSupport.hpp"
 
 #include <array>
-#include <map>
 #include <cmath>
+#include <map>
 #ifndef M_PI
 #define M_PI (3.141592653)
 #endif
 
 class BlendTest
 {
-  template <class DataType> using DataPair = std::vector<std::pair<DataType, DataType>>;
+  template <class DataType>
+  using DataPair = std::vector<std::pair<DataType, DataType>>;
 
   const QChar m_rowChar = 'R';
   const QChar m_colChar = 'C';
