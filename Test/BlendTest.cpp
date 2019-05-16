@@ -63,10 +63,10 @@ class BlendTest
   const QString m_ImageReaderClassName = "ITKImageReader";
 
   // NOTE This should change to read the path of the DREAM3D_SDK CMake variable
-  const QString m_Image1Path = "C:\\Users\\mmarine\\Desktop\\EBSD_Alg\\2209p230908A\\Images\\R0C0.jpeg";
-  const QString m_Image2Path = "C:\\Users\\mmarine\\Desktop\\EBSD_Alg\\2209p230908A\\Images\\R0C1.jpeg";
-  const QString m_Image3Path = "C:\\Users\\mmarine\\Desktop\\EBSD_Alg\\2209p230908A\\Images\\R1C0.jpeg";
-  const QString m_Image4Path = "C:\\Users\\mmarine\\Desktop\\EBSD_Alg\\2209p230908A\\Images\\R1C1.jpeg";
+  const QString m_Image1Path = "C:\\Users\\mmarine\\Desktop\\EBSD_Alg\\2209p230908A\\Images\\Color\\R0C0.jpeg";
+  const QString m_Image2Path = "C:\\Users\\mmarine\\Desktop\\EBSD_Alg\\2209p230908A\\Images\\Color\\R0C1.jpeg";
+  const QString m_Image3Path = "C:\\Users\\mmarine\\Desktop\\EBSD_Alg\\2209p230908A\\Images\\Color\\R1C0.jpeg";
+  const QString m_Image4Path = "C:\\Users\\mmarine\\Desktop\\EBSD_Alg\\2209p230908A\\Images\\Color\\R1C1.jpeg";
   const QString m_Image1Name = "R0C0";
   const QString m_Image2Name = "R0C1";
   const QString m_Image3Name = "R1C0";
