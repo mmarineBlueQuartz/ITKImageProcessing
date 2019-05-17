@@ -250,34 +250,13 @@ public:
   // =============================================================================
   MeasureType GetValue(const ParametersType& parameters) const override
   {
-    const double tolerance = 0.05;
     ImageGrid distortedGrid;
-
-    // Cache a bunch of stuff
-    typename InputImage::RegionType bufferedRegion;
-    typename InputImage::SizeType dims;
-    size_t width;
-    size_t height;
-    double lastXIndex;
-    double lastYIndex;
-
-    double x_trans;
-    double y_trans;
-    double x = 0;
-    double y = 0;
-    double u_v = 0;
-    double term = 0;
-
-    std::pair<int, int> eachIJ{};
-    PixelCoord eachPixel;
-    typename InputImage::Pointer distortedImage;
-
     ParallelTaskAlgorithm taskAlg();
 
     // Apply the Transform to each image in the image grid
     for(const auto& eachImage : m_imageGrid) // Parallelize this
     {
-      taskAlg.execute(applyTransformation(eachImage));
+      taskAlg.execute(applyTransformation(eachImage, distortedGrid));
     }
 
     taskAlg.wait();
@@ -286,7 +265,7 @@ public:
     std::atomic<MeasureType> residual{0.0};
     for(const auto& eachOverlap : m_overlaps) // Parallelize this
     {
-      taskAlg.execute(findFFTConvolution(eachOverlap));
+      taskAlg.execute(findFFTConvolution(eachOverlap, distortedGrid));
     }
 
     taskAlg.wait();
@@ -295,19 +274,21 @@ public:
   }
 
   // =============================================================================
-  void applyTransformation(const ImageGrid& image)
+  void applyTransformation(const ImageGrid& image, ImageGrid& distortedGrid)
   {
-    bufferedRegion = eachImage.second->GetBufferedRegion();
-    dims = bufferedRegion.GetSize();
-    width = dims[0];
-    height = dims[1];
-    lastXIndex = width - 1 + tolerance;
-    lastYIndex = height - 1 + tolerance;
+    const double tolerance = 0.05;
 
-    x_trans = (width - 1) / 2.0;
-    y_trans = (height - 1) / 2.0;
+    typename InputImage::RegionType bufferedRegion = eachImage.second->GetBufferedRegion();
+    typename InputImage::SizeTypedims = bufferedRegion.GetSize();
+    const size_t width = dims[0];
+    const size_t height = dims[1];
+    const double lastXIndex = width - 1 + tolerance;
+    const double lastYIndex = height - 1 + tolerance;
 
-    distortedImage = InputImage::New();
+    const double x_trans = (width - 1) / 2.0;
+    const double y_trans = (height - 1) / 2.0;
+
+    typename InputImage::Pointer distortedImage = InputImage::New();
     distortedImage->SetRegions(bufferedRegion);
     distortedImage->Allocate();
 
@@ -316,11 +297,13 @@ public:
     for(it.GoToBegin(); !it.IsAtEnd(); ++it) // TODO Parallelize this
     {
       PixelCoord pixel = it.GetIndex();
-      x = x_trans;
-      y = y_trans;
-      for(size_t idx = 0; idx < parameters.size(); ++idx) // TODO Parallelize this
+      double x = x_trans;
+      double y = y_trans;
+      const size_t parametersCount = parameters.size();
+      for(size_t idx = 0; idx < parametersCount; ++idx) // TODO Parallelize this
       {
-        eachIJ = m_IJ[idx - (idx >= m_IJ.size() ? m_IJ.size() : 0)];
+        const size_t index = idx - (idx >= m_IJ.size() ? m_IJ.size() : 0);
+        std::pair<int, int> eachIJ = m_IJ[index];
 
         u_v = pow((pixel[0] - x_trans), eachIJ.first) * pow((pixel[1] - y_trans), eachIJ.second);
 
@@ -343,16 +326,16 @@ public:
   }
 
   // =============================================================================
-  void findFFTConvolution(const OverlapPair& pair)
+  void findFFTConvolution(const OverlapPair& overlap, const ImageGrid& distortedGrid)
   {
-    typename InputImage::Pointer image = distortedGrid.at(eachOverlap.first.first);
-    image->SetRequestedRegion(eachOverlap.second.first);
-    image->GetRequestedRegion().IsInside(eachOverlap.second.first);
+    typename InputImage::Pointer image = distortedGrid.at(overlap.first.first);
+    image->SetRequestedRegion(overlap.second.first);
+    image->GetRequestedRegion().IsInside(overlap.second.first);
     m_filter->SetInput(image);
 
-    typename InputImage::Pointer kernel = distortedGrid.at(eachOverlap.first.second);
-    kernel->SetRequestedRegion(eachOverlap.second.second);
-    kernel->GetRequestedRegion().IsInside(eachOverlap.second.second);
+    typename InputImage::Pointer kernel = distortedGrid.at(overlap.first.second);
+    kernel->SetRequestedRegion(overlap.second.second);
+    kernel->GetRequestedRegion().IsInside(overlap.second.second);
     m_filter->SetKernelImage(kernel);
 
     m_filter->Update();
