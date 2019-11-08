@@ -99,21 +99,6 @@ bool Blend::GetConvergenceFromStopDescription(const QString& stopDescription) co
 //
 // -----------------------------------------------------------------------------
 Blend::Blend()
-: m_MaxIterations(1000)
-, m_Degree(2)
-, m_OverlapAmt({ 10, 10 })
-, m_LowTolerance(1E-2)
-, m_HighTolerance(1E-2)
-, m_UseAmoebaOptimizer(false)
-, m_SpecifyInitialSimplex(true)
-, m_PxStr("0.0;0.0;0.0;1.0;0.0;0.0;0.0")
-, m_PyStr("0.0;1.0;0.0;0.0;0.0;0.0;0.0")
-, m_BlendDCName("Blend Data")
-, m_TransformMatrixName("Transform Matrix")
-, m_TransformArrayName("Transform")
-//, m_NumIterationsArrayName("Iterations")
-, m_ResidualArrayName("Residual")
-, m_TransformPrefix("Transformed_")
 {
   initialize();
 }
@@ -659,7 +644,7 @@ double pow(double base, size_t pow)
 // -----------------------------------------------------------------------------
 template <typename T>
 void transformDataPixel(int degree, double x_trans, double y_trans, const SizeVec2Type& newPixel, const std::vector<double>& transformVector, const SizeVec3Type& dimensions,
-                        typename const DataArray<T>::Pointer& da, typename const DataArray<T>::Pointer& tempDACopy)
+                        const typename DataArray<T>::Pointer& da, const typename DataArray<T>::Pointer& tempDACopy)
 {
   using PixelTyped = std::array<double, 2>;
 
@@ -715,7 +700,7 @@ void transformDataPixel(int degree, double x_trans, double y_trans, const SizeVe
 //
 // -----------------------------------------------------------------------------
 template <typename T>
-void transformDataArray(int degree, const std::vector<double>& transformVector, const SizeVec3Type& dimensions, double x_trans, double y_trans, typename const DataArray<T>::Pointer& da)
+void transformDataArray(int degree, const std::vector<double>& transformVector, const SizeVec3Type& dimensions, double x_trans, double y_trans, const typename DataArray<T>::Pointer& da)
 {
   // Do not resize items that do not match the geometry.
   size_t flattenedDims = std::accumulate(dimensions.begin(), dimensions.end(), 1, std::multiplies<double>());
