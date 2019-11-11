@@ -620,7 +620,7 @@ size_t flatten(const SizeVec2Type& xyPos, const SizeVec3Type& dimensions)
   const size_t y = xyPos[1];
 
   const size_t width = dimensions[0];
-  const size_t height = dimensions[1];
+  //  const size_t height = dimensions[1];
 
   return x + y * width;
 }
@@ -646,7 +646,7 @@ template <typename T>
 void transformDataPixel(int degree, double x_trans, double y_trans, const SizeVec2Type& newPixel, const std::vector<double>& transformVector, const SizeVec3Type& dimensions,
                         const typename DataArray<T>::Pointer& da, const typename DataArray<T>::Pointer& tempDACopy)
 {
-  using PixelTyped = std::array<double, 2>;
+  // using PixelTyped = std::array<double, 2>;
 
   const std::array<double, 2> newPrime = {newPixel[0] - x_trans, newPixel[1] - y_trans};
   const double newXPrime = newPrime[0];
